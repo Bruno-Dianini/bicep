@@ -1,0 +1,37 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: Deploy
+    steps:
+      - task: AzureResourceManagerTemplateDeployment@3
+        displayName: 'Deploy Bicep'
+        inputs:
+          deploymentScope: 'Resource Group'
+          azureResourceManagerConnection: 'subscriptions'
+          subscriptionId: 'subscription-id'
+          action: 'Create Or Update Resource Group'
+          resourceGroupName: 'testbiceps'
+          location: 'East US'
+          templateLocation: 'Linked artifact'
+          csmFile: 'main.bicep'
+          csmParametersFile: 'main.parameters.json'
+          deploymentMode: 'Incremental'
+    
+  - job: CleanUP
+    dependsOn: Deploy
+    steps:
+      - task: AzureCLI@2
+        displayName: 'Clean Up Resouces'
+        inputs:
+          azureSubscription: 'subscriptions'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: 'az group delete --name testbiceps --yes'
